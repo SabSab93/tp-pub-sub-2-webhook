@@ -6,6 +6,12 @@
     </header>
 
     <main>
+
+      <section class="card">
+        <h2>Who I Am (mon IP)</h2>
+        <button @click="loadIP"> Afficher mon IP:{{ ip }} </button>
+      </section>
+
       <section class="card">
         <h2>Webhooks</h2>
         <form @submit.prevent="registerHook">
@@ -44,7 +50,7 @@ import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { socket } from "./services/socket";
 import { getWhoAmI, listHooks, addHook, delHook, sendSay } from "./services/api";
 
-const ips = ref([]);
+const ip = ref(null); 
 const hooks = ref([]);
 const callbackUrl = ref("");
 const say = ref("Hello !");
@@ -53,12 +59,14 @@ const msgBox = ref(null);
 
 function push(kind, tag, text) {
   messages.push({ kind, tag, text });
-  nextTick(() => { if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight; });
+  nextTick(() => {
+    if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
+  });
 }
 
-async function loadIPs() {
-  const data = await getWhoAmI();
-  ips.value = data.ip || [];
+async function loadIP() {
+  const { ip: val } = await getWhoAmI();
+  ip.value = val;
 }
 
 async function refreshHooks() {
@@ -85,7 +93,9 @@ async function send() {
 }
 
 onMounted(() => {
+  loadIP(); 
   refreshHooks();
+
   socket.on("connect", () => push("system", "ws", `WS connecté (${socket.id})`));
   socket.on("disconnect", (r) => push("system", "ws", `WS déconnecté: ${r}`));
   socket.on("message", (p) => push("other", "message", String(p)));
@@ -93,8 +103,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  socket.off("connect"); socket.off("disconnect");
-  socket.off("message"); socket.off("x:in");
+  socket.off("connect");
+  socket.off("disconnect");
+  socket.off("message");
+  socket.off("x:in");
 });
 </script>
 
@@ -114,5 +126,6 @@ form { display:flex; gap:8px; margin-top:12px; }
 input { flex:1; padding:10px 12px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
 button { padding:10px 14px; border-radius:10px; border:1px solid #334155; background:#1f2937; color:#e2e8f0; cursor:pointer; }
 button[disabled] { opacity:.5; cursor:not-allowed; }
-.ip-list { margin-top:8px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 1.1rem; margin-top: 8px; }
+.muted { opacity:.7; font-style: italic; }
 </style>

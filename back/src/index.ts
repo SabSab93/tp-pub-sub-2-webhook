@@ -2,19 +2,25 @@ import "dotenv/config";
 import http from "http";
 import path from "path";
 import express from "express";
-import cors from "cors";
 
 import { ChatSocket } from "./chat/chat.socket";
 import { WhoAmIController } from "./api/whoami.controller";
 import { ChatController } from "./api/chat.controller";
 import { ChatHook } from "./api/hook.controller";
-import { CONFIG } from "./config";
+
 
 const app = express();
 const server = http.createServer(app);
-
 ChatSocket.INSTANCE.setup(server);
-app.use(cors({ origin: CONFIG.CORS_ORIGIN }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Vary", "Origin");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 app.use(express.json());
 
 const frontDist = path.join(__dirname, "../front/dist");
@@ -28,6 +34,8 @@ app.post("/api/hook", hook.post.bind(hook));
 app.get("/api/hook", hook.get.bind(hook));
 app.delete("/api/hook", hook.delete.bind(hook));
 
-server.listen(CONFIG.PORT, CONFIG.SERVICE_IP || "0.0.0.0", () => {
-  console.log(`Service X (webhook) running at http://${CONFIG.SERVICE_IP}:${CONFIG.PORT}`);
+const PORT = Number(process.env.PORT ?? 3000);
+
+server.listen(PORT,  () => {
+  console.log(`Back on http://localhost:${PORT}`);
 });

@@ -1,0 +1,31 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
+const http_1 = __importDefault(require("http"));
+const path_1 = __importDefault(require("path"));
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const chat_socket_1 = require("./chat/chat.socket");
+const whoami_controller_1 = require("./api/whoami.controller");
+const chat_controller_1 = require("./api/chat.controller");
+const hook_controller_1 = require("./api/hook.controller");
+const config_1 = require("./config");
+const app = (0, express_1.default)();
+const server = http_1.default.createServer(app);
+chat_socket_1.ChatSocket.INSTANCE.setup(server);
+app.use((0, cors_1.default)({ origin: config_1.CONFIG.CORS_ORIGIN }));
+app.use(express_1.default.json());
+const frontDist = path_1.default.join(__dirname, "../front/dist");
+app.use(express_1.default.static(frontDist));
+app.get("/api/whoami", whoami_controller_1.WhoAmIController.get);
+app.post("/api/chat", chat_controller_1.ChatController.post);
+const hook = hook_controller_1.ChatHook.INSTANCE;
+app.post("/api/hook", hook.post.bind(hook));
+app.get("/api/hook", hook.get.bind(hook));
+app.delete("/api/hook", hook.delete.bind(hook));
+server.listen(config_1.CONFIG.PORT, config_1.CONFIG.SERVICE_IP || "0.0.0.0", () => {
+    console.log(`Service X (webhook) running at http://${config_1.CONFIG.SERVICE_IP}:${config_1.CONFIG.PORT}`);
+});
