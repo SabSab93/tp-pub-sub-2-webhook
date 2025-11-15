@@ -11,7 +11,15 @@ export async function getWhoAmI() {
   };
 }
 
-export const listHooks = async () => (await api.get("/api/hook")).data;
-export const addHook = async (callback) => (await api.post("/api/hook", { callback })).data;
-export const delHook = async (callback) => (await api.delete("/api/hook", { data: { callback } })).data;
 export const sendSay = async (say) => (await api.post("/api/chat", { say })).data;
+export async function listHooks() {
+  const { data } = await api.get("/api/hook");
+  return data; 
+}
+
+export async function deleteHook(callback) {
+  const { data } = await api.delete("/api/hook", {
+    data: { callback }
+  });
+  return data;
+}
